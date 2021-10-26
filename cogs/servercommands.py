@@ -41,7 +41,7 @@ class ServerCommands(commands.Cog):
 
 		self.lastAuthor = ["", 0]
 
-		#self.pingServer.start()
+		self.pingServer.start()
 		self.getFromRelay.start()
 	
 	def getGuildInfo(self, guild: discord.Guild) -> InfoPayload:
@@ -122,7 +122,7 @@ class ServerCommands(commands.Cog):
 		if channelID not in self.json: await ctx.message.reply("This channel isn't connected to a server"); return
 
 		if self.json[channelID]["relay"] == 1:
-			self.removeConStr(ctx.guild, self.json[channelID]['server'].constr)
+			self.removeConStr(ctx.guild, self.json[channelID]['server'].getConstring())
 
 		del self.json[channelID]
 		await ctx.message.reply("Connection removed successfully!")
@@ -189,7 +189,7 @@ class ServerCommands(commands.Cog):
 
 		if serverCon["relay"] == 1: await ctx.message.reply("The relay is already enabled"); return
 
-		if self.relay.isConStrAdded(serverCon["server"].constr):
+		if self.relay.isConStrAdded(serverCon["server"].getConstring()):
 			await ctx.message.reply("The relay is already handling this server in another channel, please disable it there first")
 			return
 
@@ -255,7 +255,7 @@ class ServerCommands(commands.Cog):
 
 	# Tasks
 	def cog_unload(self):
-		#self.pingServer.cancel()
+		self.pingServer.cancel()
 		self.getFromRelay.cancel()
 
 	@tasks.loop(minutes=1)
@@ -403,7 +403,7 @@ class ServerCommands(commands.Cog):
 			for cmd in self.bot.commands:
 				if cmd.name == cmdText: return # Don't relay the message if it's a valid bot command
 
-		constring = self.json[channelID]["server"].constr
+		constring = self.json[channelID]["server"].getConstring()
 		if msg.author.colour.value == 0: colour = (255, 255, 255)
 		else: colour = msg.author.colour.to_rgb()
 		if len(msg.content) != 0: self.relay.addMessage((msg.author.display_name, msg.content, "%02x%02x%02x" % colour, msg.author.top_role.name, msg.clean_content), constring)
